@@ -14,8 +14,7 @@
     "winston": "^3.17.0"
   },
   "scripts": {
-    "hello": "ts-node src/index.ts say-hi --name 'HISP Tanzania'",
-    "dhis2-info": "ts-node src/index.ts dhis2-info",
+    "transfer-dataset-data": "ts-node src/index.ts transfer-dataset-data",
     "type-check": "tsc --noEmit",
     "build": "tsup",
     "test": "vitest"
