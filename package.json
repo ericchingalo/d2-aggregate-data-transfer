@@ -1,0 +1,40 @@
+{
+  "name": "node-script-template",
+  "description": "A node script template for scripts used to interact with DHIS2 API",
+  "version": "1.0.1",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^3.2.6",
+    "axios": "^1.9.0",
+    "commander": "^14.0.0",
+    "dotenv": "^16.5.0",
+    "lodash": "^4.17.21",
+    "luxon": "^3.6.1",
+    "winston": "^3.17.0"
+  },
+  "scripts": {
+    "hello": "ts-node src/index.ts say-hi --name 'HISP Tanzania'",
+    "dhis2-info": "ts-node src/index.ts dhis2-info",
+    "type-check": "tsc --noEmit",
+    "build": "tsup",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@types/async": "^3.2.24",
+    "@types/node": "^22.13.13",
+    "bestzip": "^2.2.1",
+    "rimraf": "^6.0.1",
+    "semantic-release": "^24.2.5",
+    "tsup": "^8.5.0",
+    "typescript": "^5",
+    "vitest": "^3.2.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.3",
+    "@semantic-release/release-notes-generator": "^14.0.3"
+  },
+  "packageManager": "pnpm@10.11.0"
+}
