@@ -20,19 +20,25 @@ program
     "End date (YYYY-MM-DD)",
     DateTime.now().toFormat("yyyy-MM-dd"),
   )
+  .option(
+    "--attributeOptionCombo <attribute-option-combo-id>",
+    "Attribute option combo id",
+  )
   .action(
     ({
       startDate,
       endDate,
+      dataSetIds,
+      attributeOptionCombo,
       from: source,
       to: target,
-      dataSetIds,
     }: {
       startDate: string;
       endDate?: string;
       from: string;
       to: string;
       dataSetIds: string;
+      attributeOptionCombo?: string;
     }) => {
       endDate = endDate ?? DateTime.now().toFormat("yyyy-MM-dd");
       const dataSetIdsList: string[] = dataSetIds.split(",");
@@ -40,6 +46,7 @@ program
         initiateTransferDataSetData({
           startDate,
           endDate,
+          attributeOptionCombo,
           dataSetIds: dataSetIdsList,
           sourceOuId: source,
           targetOuId: target,
