@@ -22,37 +22,33 @@ export function getDHIS2Periods({
   const periods: string[] = [];
   const start = DateTime.fromISO(startDate);
   const end = DateTime.fromISO(endDate);
+  let current = start;
   switch (periodType) {
     case PERIOD_TYPES.DAILY:
-      let current = start;
       while (current <= end) {
         periods.push(current.toFormat("yyyyMMdd"));
         current = current.plus({ days: 1 });
       }
       break;
     case PERIOD_TYPES.WEEKLY:
-      current = start;
       while (current <= end) {
-        periods.push(current.toFormat("yyyyW"));
+        periods.push(current.toFormat("yyyy'W'W"));
         current = current.plus({ days: 7 });
       }
       break;
     case PERIOD_TYPES.MONTHLY:
-      current = start;
       while (current <= end) {
         periods.push(current.toFormat("yyyyMM"));
         current = current.plus({ months: 1 });
       }
       break;
     case PERIOD_TYPES.QUARTERLY:
-      current = start;
       while (current <= end) {
-        periods.push(current.toFormat("yyyyQ"));
+        periods.push(current.toFormat("yyyy'Q'q"));
         current = current.plus({ months: 3 });
       }
       break;
     case PERIOD_TYPES.YEARLY:
-      current = start;
       while (current <= end) {
         periods.push(current.toFormat("yyyy"));
         current = current.plus({ years: 1 });
