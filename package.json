@@ -1,6 +1,6 @@
 {
-  "name": "node-script-template",
-  "description": "A node script template for scripts used to interact with DHIS2 API",
+  "name": "d2-aggregate-data-transfer",
+  "description": "CLI tool for transferring aggregate data between organisation units in DHIS2",
   "version": "1.0.1",
   "main": "index.js",
   "license": "MIT",

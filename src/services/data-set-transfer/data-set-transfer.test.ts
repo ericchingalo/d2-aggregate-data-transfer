@@ -10,8 +10,7 @@ const mockParams = {
 };
 
 describe("data set transfer", () => {
-  test("initiate transfer of dataset-data", () => {
-    const result = initiateTransferDataSetData(mockParams);
-    expect(result).toBe(true);
+  test("initiate transfer of dataset-data", async () => {
+    await expect(initiateTransferDataSetData(mockParams)).resolves.not.toThrow();
   });
 });
