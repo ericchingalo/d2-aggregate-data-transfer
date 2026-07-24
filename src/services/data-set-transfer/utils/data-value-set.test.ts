@@ -149,7 +149,7 @@ describe("data-value-set utility", () => {
       dataSet: "ds-1",
       period: "202301",
       orgUnit: "source-ou-1",
-      completedDate: "2023-01-15",
+      completeDate: "2023-01-15",
       dataValues: [
         {
           dataElement: "de-1",
@@ -178,7 +178,7 @@ describe("data-value-set utility", () => {
       // Original data value set (cleared values with comment)
       expect(result[0]).toEqual({
         ...inputDataValueSet,
-        completedDate: null,
+        completeDate: null,
         dataValues: [
           {
             dataElement: "de-1",

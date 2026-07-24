@@ -1,9 +1,12 @@
+import { filter } from "lodash";
 import logger from "../../logging";
 import { getDataSetById } from "./utils/data-set";
 import {
+  getCompletedDataSetRegistrations,
   getDataValueSetFromDHIS2,
   getUpdatedDataValueSets,
   saveDataValueSetToDHIS2,
+  updatedDataSetCompleteStatus,
 } from "./utils/data-value-set";
 import { getDHIS2Periods } from "./utils/period";
 
@@ -53,6 +56,18 @@ export async function initiateTransferDataSetData({
                 attributeOptionCombo,
               });
               if (dataValueSet?.dataValues.length) {
+                const completeDataSets = filter(
+                  await getCompletedDataSetRegistrations({
+                    period: period.trim(),
+                    orgUnit: sourceOuId,
+                    dataSet: dataSetId,
+                  }),
+                  ({ attributeOptionCombo: dataSetAttributeCombo }) =>
+                    !attributeOptionCombo
+                      ? true
+                      : dataSetAttributeCombo === attributeOptionCombo,
+                );
+
                 const updatedDataValuesSets = await getUpdatedDataValueSets(
                   dataValueSet,
                   targetOuId,
@@ -60,7 +75,21 @@ export async function initiateTransferDataSetData({
 
                 for (const updatedDataValueSet of updatedDataValuesSets) {
                   try {
-                    await saveDataValueSetToDHIS2(updatedDataValueSet);
+                    await saveDataValueSetToDHIS2(
+                      updatedDataValueSet,
+                      attributeOptionCombo,
+                    );
+
+                    for (const completeDataSet of completeDataSets) {
+                      await updatedDataSetCompleteStatus({
+                        ...completeDataSet,
+                        organisationUnit: updatedDataValueSet.orgUnit,
+                        completed:
+                          updatedDataValueSet.orgUnit == targetOuId
+                            ? completeDataSet.completed
+                            : false,
+                      });
+                    }
                   } catch (error) {
                     logger.error(
                       `Error updating data value set for data set ${dataSetId} for period ${period} at org unit ${targetOuId}`,

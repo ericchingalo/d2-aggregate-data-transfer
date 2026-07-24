@@ -70,7 +70,7 @@ describe("data set transfer", () => {
     mockedGetDataValueSetFromDHIS2.mockResolvedValue(mockDataValueSet);
 
     const mockUpdatedValueSets = [
-      { ...mockDataValueSet, orgUnit: "source-ou-1", completedDate: null },
+      { ...mockDataValueSet, orgUnit: "source-ou-1", completeDate: null },
       { ...mockDataValueSet, orgUnit: "target-ou-2" },
     ];
 
@@ -243,4 +243,3 @@ describe("data set transfer", () => {
     expect(mockedSaveDataValueSetToDHIS2).toHaveBeenCalledTimes(2);
   });
 });
-
