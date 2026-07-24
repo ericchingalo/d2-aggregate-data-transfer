@@ -2,9 +2,11 @@ import { describe, test, expect, vi, beforeEach } from "vitest";
 import { initiateTransferDataSetData } from ".";
 import { getDataSetById } from "./utils/data-set";
 import {
+  getCompletedDataSetRegistrations,
   getDataValueSetFromDHIS2,
   getUpdatedDataValueSets,
   saveDataValueSetToDHIS2,
+  updatedDataSetCompleteStatus,
 } from "./utils/data-value-set";
 import { getDHIS2Periods } from "./utils/period";
 
@@ -17,6 +19,12 @@ const mockedGetDHIS2Periods = vi.mocked(getDHIS2Periods);
 const mockedGetDataValueSetFromDHIS2 = vi.mocked(getDataValueSetFromDHIS2);
 const mockedGetUpdatedDataValueSets = vi.mocked(getUpdatedDataValueSets);
 const mockedSaveDataValueSetToDHIS2 = vi.mocked(saveDataValueSetToDHIS2);
+const mockedGetCompletedDataSetRegistrations = vi.mocked(
+  getCompletedDataSetRegistrations,
+);
+const mockedUpdatedDataSetCompleteStatus = vi.mocked(
+  updatedDataSetCompleteStatus,
+);
 
 const mockParams = {
   startDate: "2022-01-01",
@@ -30,6 +38,7 @@ const mockParams = {
 describe("data set transfer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedGetCompletedDataSetRegistrations.mockResolvedValue([]);
   });
 
   test("should do nothing when dataSetIds is empty", async () => {
@@ -69,6 +78,17 @@ describe("data set transfer", () => {
 
     mockedGetDataValueSetFromDHIS2.mockResolvedValue(mockDataValueSet);
 
+    const mockRegistration = {
+      period: "202201",
+      dataSet: "ds-1",
+      organisationUnit: "source-ou-1",
+      attributeOptionCombo: "aoc-1",
+      date: "2022-01-15",
+      storedBy: "admin",
+      completed: true,
+    };
+    mockedGetCompletedDataSetRegistrations.mockResolvedValue([mockRegistration]);
+
     const mockUpdatedValueSets = [
       { ...mockDataValueSet, orgUnit: "source-ou-1", completeDate: null },
       { ...mockDataValueSet, orgUnit: "target-ou-2" },
@@ -76,6 +96,7 @@ describe("data set transfer", () => {
 
     mockedGetUpdatedDataValueSets.mockResolvedValue(mockUpdatedValueSets);
     mockedSaveDataValueSetToDHIS2.mockResolvedValue(undefined);
+    mockedUpdatedDataSetCompleteStatus.mockResolvedValue(undefined);
 
     await initiateTransferDataSetData(mockParams);
 
@@ -91,6 +112,11 @@ describe("data set transfer", () => {
       dataSet: "ds-1",
       attributeOptionCombo: "aoc-1",
     });
+    expect(mockedGetCompletedDataSetRegistrations).toHaveBeenCalledWith({
+      period: "202201",
+      orgUnit: "source-ou-1",
+      dataSet: "ds-1",
+    });
     expect(mockedGetUpdatedDataValueSets).toHaveBeenCalledWith(
       mockDataValueSet,
       "target-ou-2",
@@ -99,11 +125,24 @@ describe("data set transfer", () => {
     expect(mockedSaveDataValueSetToDHIS2).toHaveBeenNthCalledWith(
       1,
       mockUpdatedValueSets[0],
+      "aoc-1",
     );
     expect(mockedSaveDataValueSetToDHIS2).toHaveBeenNthCalledWith(
       2,
       mockUpdatedValueSets[1],
+      "aoc-1",
     );
+    expect(mockedUpdatedDataSetCompleteStatus).toHaveBeenCalledTimes(2);
+    expect(mockedUpdatedDataSetCompleteStatus).toHaveBeenNthCalledWith(1, {
+      ...mockRegistration,
+      organisationUnit: "source-ou-1",
+      completed: false,
+    });
+    expect(mockedUpdatedDataSetCompleteStatus).toHaveBeenNthCalledWith(2, {
+      ...mockRegistration,
+      organisationUnit: "target-ou-2",
+      completed: true,
+    });
   });
 
   test("should warn and skip processing when no periods are generated", async () => {

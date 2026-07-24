@@ -3,6 +3,9 @@ import {
   saveDataValueSetToDHIS2,
   getDataValueSetFromDHIS2,
   getUpdatedDataValueSets,
+  getCategoryOptionComboByID,
+  updatedDataSetCompleteStatus,
+  getCompletedDataSetRegistrations,
 } from "./data-value-set";
 import dhis2Client from "../../../clients/dhis2";
 import { getOrgUnitById } from "./org-unit";
@@ -23,6 +26,153 @@ const mockedGetOrgUnitById = vi.mocked(getOrgUnitById);
 describe("data-value-set utility", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe("getCategoryOptionComboByID", () => {
+    test("should return category option combo when status is 200", async () => {
+      const mockCoc = {
+        id: "coc-1",
+        name: "default",
+        categoryCombo: { id: "cc-1" },
+        categoryOptions: [{ id: "co-1" }],
+      };
+
+      mockedGet.mockResolvedValueOnce({
+        status: 200,
+        data: mockCoc,
+      } as any);
+
+      const result = await getCategoryOptionComboByID("coc-1");
+
+      expect(mockedGet).toHaveBeenCalledWith("categoryOptionCombos/coc-1");
+      expect(result).toEqual(mockCoc);
+    });
+
+    test("should throw error when status is not 200", async () => {
+      mockedGet.mockResolvedValueOnce({
+        status: 404,
+        data: { message: "Not found" },
+      } as any);
+
+      await expect(getCategoryOptionComboByID("coc-1")).rejects.toThrow(
+        'Error retrieving category option combo for data set coc-1. Response status 404 : {"message":"Not found"}',
+      );
+    });
+  });
+
+  describe("updatedDataSetCompleteStatus", () => {
+    const payload = {
+      period: "202301",
+      dataSet: "ds-1",
+      organisationUnit: "ou-1",
+      attributeOptionCombo: "aoc-1",
+      date: "2023-01-15",
+      storedBy: "admin",
+      completed: true,
+    };
+
+    test("should post data set completion payload when category option combo exists", async () => {
+      const mockCoc = {
+        id: "aoc-1",
+        name: "default",
+        categoryCombo: { id: "cc-1" },
+        categoryOptions: [{ id: "co-1" }, { id: "co-2" }],
+      };
+
+      mockedGet.mockResolvedValueOnce({
+        status: 200,
+        data: mockCoc,
+      } as any);
+
+      mockedPost.mockResolvedValueOnce({
+        status: 200,
+        data: {},
+      } as any);
+
+      await updatedDataSetCompleteStatus(payload);
+
+      expect(mockedGet).toHaveBeenCalledWith("categoryOptionCombos/aoc-1");
+      expect(mockedPost).toHaveBeenCalledWith("dataEntry/dataSetCompletion", {
+        dataSet: "ds-1",
+        period: "202301",
+        orgUnit: "ou-1",
+        attribute: {
+          combo: "cc-1",
+          options: ["co-1", "co-2"],
+        },
+        completed: true,
+      });
+    });
+
+    test("should throw error when post response status is not 200", async () => {
+      const mockCoc = {
+        id: "aoc-1",
+        name: "default",
+        categoryCombo: { id: "cc-1" },
+        categoryOptions: [{ id: "co-1" }],
+      };
+
+      mockedGet.mockResolvedValueOnce({
+        status: 200,
+        data: mockCoc,
+      } as any);
+
+      mockedPost.mockResolvedValueOnce({
+        status: 500,
+        data: { message: "Internal server error" },
+      } as any);
+
+      await expect(updatedDataSetCompleteStatus(payload)).rejects.toThrow(
+        'Error updating data set complete status for data set ds-1. Response status 500 : {"message":"Internal server error"}',
+      );
+    });
+  });
+
+  describe("getCompletedDataSetRegistrations", () => {
+    const params = {
+      period: "202301",
+      dataSet: "ds-1",
+      orgUnit: "ou-1",
+    };
+
+    test("should return completeDataSetRegistrations array when status is 200", async () => {
+      const mockRegistrations = [
+        {
+          period: "202301",
+          dataSet: "ds-1",
+          organisationUnit: "ou-1",
+          attributeOptionCombo: "aoc-1",
+          date: "2023-01-15",
+          storedBy: "admin",
+          completed: true,
+        },
+      ];
+
+      mockedGet.mockResolvedValueOnce({
+        status: 200,
+        data: {
+          completeDataSetRegistrations: mockRegistrations,
+        },
+      } as any);
+
+      const result = await getCompletedDataSetRegistrations(params);
+
+      expect(mockedGet).toHaveBeenCalledWith(
+        "completeDataSetRegistrations?period=202301&orgUnit=ou-1&dataSet=ds-1",
+      );
+      expect(result).toEqual(mockRegistrations);
+    });
+
+    test("should throw error when status is not 200", async () => {
+      mockedGet.mockResolvedValueOnce({
+        status: 400,
+        data: { message: "Bad request" },
+      } as any);
+
+      await expect(getCompletedDataSetRegistrations(params)).rejects.toThrow(
+        'Error retrieving data set registrations for data set ds-1. Response status 400 : {"message":"Bad request"}',
+      );
+    });
   });
 
   describe("saveDataValueSetToDHIS2", () => {
@@ -75,15 +225,15 @@ describe("data-value-set utility", () => {
       expect(mockedPost).toHaveBeenCalled();
     });
 
-    test("should handle status other than 200/201 without throwing", async () => {
+    test("should throw error when status is other than 200/201", async () => {
       mockedPost.mockResolvedValueOnce({
         status: 400,
         data: { message: "Bad Request" },
       } as any);
 
-      await saveDataValueSetToDHIS2(payload);
-
-      expect(mockedPost).toHaveBeenCalled();
+      await expect(saveDataValueSetToDHIS2(payload)).rejects.toThrow(
+        'Error saving data value set for data set ds-1. Response status 400 : {"message":"Bad Request"}',
+      );
     });
 
     test("should re-throw when dhis2Client post throws an error", async () => {
