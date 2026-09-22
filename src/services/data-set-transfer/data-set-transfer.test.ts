@@ -145,6 +145,65 @@ describe("data set transfer", () => {
     });
   });
 
+  test("should successfully transfer dataset data when attributeOptionCombo is omitted", async () => {
+    mockedGetDataSetById.mockResolvedValue({
+      id: "ds-1",
+      name: "DataSet 1",
+      periodType: "Monthly",
+    });
+
+    mockedGetDHIS2Periods.mockReturnValue(["202201"]);
+
+    const mockDataValueSet = {
+      dataSet: "ds-1",
+      period: "202201",
+      orgUnit: "source-ou-1",
+      dataValues: [
+        {
+          dataElement: "de-1",
+          categoryOptionCombo: "coc-1",
+          period: "202201",
+          orgUnit: "source-ou-1",
+          value: "10",
+        },
+      ],
+    };
+
+    mockedGetDataValueSetFromDHIS2.mockResolvedValue(mockDataValueSet);
+
+    const mockRegistration = {
+      period: "202201",
+      dataSet: "ds-1",
+      organisationUnit: "source-ou-1",
+      attributeOptionCombo: "aoc-default",
+      date: "2022-01-15",
+      storedBy: "admin",
+      completed: true,
+    };
+    mockedGetCompletedDataSetRegistrations.mockResolvedValue([mockRegistration]);
+
+    const mockUpdatedValueSets = [
+      { ...mockDataValueSet, orgUnit: "source-ou-1", completeDate: null },
+      { ...mockDataValueSet, orgUnit: "target-ou-2" },
+    ];
+
+    mockedGetUpdatedDataValueSets.mockResolvedValue(mockUpdatedValueSets);
+    mockedSaveDataValueSetToDHIS2.mockResolvedValue(undefined);
+    mockedUpdatedDataSetCompleteStatus.mockResolvedValue(undefined);
+
+    const { attributeOptionCombo: _, ...paramsWithoutAoc } = mockParams;
+    await initiateTransferDataSetData(paramsWithoutAoc);
+
+    expect(mockedGetDataValueSetFromDHIS2).toHaveBeenCalledWith({
+      period: "202201",
+      orgUnit: "source-ou-1",
+      dataSet: "ds-1",
+      attributeOptionCombo: undefined,
+    });
+    expect(mockedSaveDataValueSetToDHIS2).toHaveBeenCalledTimes(2);
+    expect(mockedUpdatedDataSetCompleteStatus).toHaveBeenCalledTimes(2);
+  });
+
   test("should warn and skip processing when no periods are generated", async () => {
     mockedGetDataSetById.mockResolvedValue({
       id: "ds-1",

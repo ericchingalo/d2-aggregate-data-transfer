@@ -14,6 +14,7 @@ type DataValueSet = {
 type DataValue = {
   dataElement: string;
   categoryOptionCombo: string;
+  attributeOptionCombo?: string;
   period: string;
   orgUnit: string;
   value: string | null;
@@ -214,7 +215,10 @@ export async function getDataValueSetFromDHIS2({
     logger.info(
       `Getting data value set for data set ${dataSet} for period ${period} at org unit ${orgUnit}`,
     );
-    const url = `dataValueSets?period=${period}&orgUnit=${orgUnit}&dataSet=${dataSet}&attributeOptionCombo=${attributeOptionCombo}`;
+    const aocQuery = attributeOptionCombo
+      ? `&attributeOptionCombo=${attributeOptionCombo}`
+      : "";
+    const url = `dataValueSets?period=${period}&orgUnit=${orgUnit}&dataSet=${dataSet}${aocQuery}`;
     const response = await dhis2Client.get<DataValueSet>(url);
 
     if (response.status === 200) {

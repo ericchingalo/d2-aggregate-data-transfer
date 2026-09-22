@@ -274,6 +274,31 @@ describe("data-value-set utility", () => {
       expect(result).toEqual(mockDataValueSet);
     });
 
+    test("should omit attributeOptionCombo from URL when not provided", async () => {
+      const mockDataValueSet = {
+        dataSet: "ds-1",
+        period: "202301",
+        orgUnit: "ou-1",
+        dataValues: [],
+      };
+
+      mockedGet.mockResolvedValueOnce({
+        status: 200,
+        data: mockDataValueSet,
+      } as any);
+
+      const result = await getDataValueSetFromDHIS2({
+        period: "202301",
+        orgUnit: "ou-1",
+        dataSet: "ds-1",
+      });
+
+      expect(mockedGet).toHaveBeenCalledWith(
+        "dataValueSets?period=202301&orgUnit=ou-1&dataSet=ds-1",
+      );
+      expect(result).toEqual(mockDataValueSet);
+    });
+
     test("should throw error when status is not 200", async () => {
       mockedGet.mockResolvedValueOnce({
         status: 500,
